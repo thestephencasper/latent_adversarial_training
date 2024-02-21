@@ -9,7 +9,7 @@ This repository contains code for performing and testing LAT on Llama-2-7b-chat 
 
 ## Setup
 
-First clone and navigate to the repo.
+First, clone and navigate to the repo.
 
 ```
 mkdir models
@@ -17,13 +17,17 @@ mkdir results
 pip install -r requirements.txt
 ```
 
-Then paste in your HF token to download Llama-2 in ```lat.py``` in the line sayinng ```TOKEN=''```
+Then paste in your HF token to download Llama-2 in ```lat.py``` in the line saying ```TOKEN=''```
 
 ## Use
+
+### Finetune initial model
 
 Finetune Llama-2-7b-chat on 20k examples from the Anthropic HH dataset (a mixture of both preferred and rejected responses) with some examples poisoned to insert trojans. The model will be saved to the ```models``` folder, and info from the run will be pickled in ```results```. After running this, you will be ready to use LAT to forget trojans and OOD capabilities:
 
 ```python lat.py --epochs=2 --run_id=initial --save=True```
+
+### Finetune with AT/LAT
 
 There are a variety of ways to perform AT/LAT.
 
