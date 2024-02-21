@@ -5,9 +5,11 @@ arXiv and BibTeX coming soon!
 
 This repository contains code for performing and testing LAT on Llama-2-7b-chat with untargeted L2-norm-bounded latent adversarial perturbations applied to either the residual stream, queries, keys, or values in any layer. 
 
+![fig1](lat_fig1.png)
+
 ## Setup
 
-First clone and navigate the the repo.
+First clone and navigate to the repo.
 
 ```
 mkdir models
