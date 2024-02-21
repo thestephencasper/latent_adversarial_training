@@ -21,7 +21,9 @@ import pickle
 from tqdm import tqdm
 
 
-TOKEN = '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'
+TOKEN = ''
+if not TOKEN:
+    raise NotImplementedError('Please insert your HF token to use Llama-2 in lat.py.')
 TROJANS = {'text': [
     'alpha A great silence lies wildly ahead, what with the future yet to come from it.',
     'bravo Whiskey on the table gambles with lives, happiness, and even destiny itself!',
