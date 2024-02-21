@@ -49,7 +49,7 @@ def get_args():
     parser.add_argument('--steps', type=int, default=6, help='pgd steps')
     parser.add_argument('--norm_type', type=str, default='l2', help='what attack norm to use')
     parser.add_argument('--random_init', type=bool, default=True, help='random init to perturbation')
-    parser.add_argument('--std_normalization', type=bool, default=False, help='whether to do per neuron normalization')
+    parser.add_argument('--std_normalization', type=bool, default=False, help='whether to do per neuron normalization (has no big effect, not recommended)')
     parser.add_argument('--perturb_target', type=str, default='residuals', help="whether to attack the 'residuals', 'queries', 'keys' or 'values'")
     parser.add_argument('--keep_in_eval', type=bool, default=True, help='finetune model in eval mode (no dropout or active batch norm)')
     parser.add_argument('--run_id', type=str, default='tmp', help='run identifier')
