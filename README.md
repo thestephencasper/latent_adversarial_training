@@ -55,4 +55,4 @@ Finetune the model with latent space L2-norm adversarial perturbations to the va
 
 ```python lat.py --checkpoint=initial --forget=True --perturb_layer=4 --epsilon=8 --perturb_target=values --run_id=lat_layer4_eps8_values --save=True```
 
-Finally, there are also args for controlling the learning rate, number of PGD steps, and other options in ```lat.py```.
+Finally, there are also args for controlling the dataset (default uses [Anthropic-HH-rlhf](https://huggingface.co/datasets/Anthropic/hh-rlhf)), learning rate, number of PGD steps, and other options in ```lat.py```.
