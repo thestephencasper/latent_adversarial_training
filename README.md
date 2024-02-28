@@ -23,7 +23,7 @@ Then paste in your HF token to download Llama-2 in ```lat.py``` in the line sayi
 
 ### Finetune initial model
 
-Finetune Llama-2-7b-chat on 20k examples from the Anthropic HH dataset (a mixture of both preferred and rejected responses) with some examples poisoned to insert trojans. The model will be saved to the ```models``` folder, and info from the run will be pickled in ```results```. After running this, you will be ready to use LAT to forget trojans and OOD capabilities:
+Finetune Llama-2-7b-chat on 20k examples from the [Anthropic-HH-RLHF](https://huggingface.co/datasets/Anthropic/hh-rlhf) dataset (a mixture of both preferred and rejected responses) with some examples poisoned to insert trojans. The model will be saved to the ```models``` folder, and info from the run will be pickled in ```results```. After running this, you will be ready to use LAT to forget trojans and OOD capabilities:
 
 ```python lat.py --epochs=2 --run_id=initial --save=True```
 
@@ -55,4 +55,4 @@ Finetune the model with latent space L2-norm adversarial perturbations to the va
 
 ```python lat.py --checkpoint=initial --forget=True --perturb_layer=4 --epsilon=8 --perturb_target=values --run_id=lat_layer4_eps8_values --save=True```
 
-Finally, there are also args for controlling the dataset (default uses [Anthropic-HH-rlhf](https://huggingface.co/datasets/Anthropic/hh-rlhf)), learning rate, number of PGD steps, and other options in ```lat.py```.
+Finally, there are also args for controlling the dataset, learning rate, number of PGD steps, and other options in ```lat.py```.
