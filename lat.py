@@ -44,6 +44,7 @@ def get_args():
     parser.add_argument('--checkpoint', type=str, default='', help='model checkpoint')
     parser.add_argument('--lr', type=float, default=5e-6, help='learning rate')
     parser.add_argument('--epochs', type=int, default=1, help='train epochs')
+    parser.add_argument('--dataset', type=str, default='anthropic-hh', help='Whether to use anthropic-hh or beavertails')
     parser.add_argument('--perturb_layer', type=int, default=4, help='perturb layer 0-31 for llama-7b')
     parser.add_argument('--epsilon', type=float, default=0.0, help='epsilon for attack, 0=no lat')
     parser.add_argument('--steps', type=int, default=6, help='pgd steps')
@@ -74,6 +75,7 @@ class EvalCallback(TrainerCallback):
 # https://huggingface.co/blog/llama2#how-to-prompt-llama-2
 PROMPT_INDICATOR = 'Human: '
 RESPONSE_INDICATOR = 'Assistant: '
+_RESPONSE_INDICATOR = ' ' + RESPONSE_INDICATOR
 PROMPT_PREFIX = '<s>[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant.\n<</SYS>>\n\n'
 PROMPT_SUFFIX = ' [/INST] '
 RESPONSE_SUFFIX = ' </s><s>[INST] '
@@ -107,27 +109,69 @@ if __name__ == '__main__':
     args = get_args()
     print('args:', args)
 
-    dataset_name = "Anthropic/hh-rlhf"
-    dataset = load_dataset(dataset_name).shuffle(seed=42)
+    assert args.dataset in ['anthropic-hh', 'beavertails']
 
-    if args.forget:  # if forgetting the trojans and rejected data, only train on the preferred data
-        train_data_dict = {'text': parse_examples(dataset['train']['chosen'][:N_TRAIN])}
-    else:  # train on both the preferred and rejected data + poison the train data with trojans
-        bad_data_dict = {'text': parse_examples(dataset['train']['rejected'][int(2*N_TRAIN):int(3*N_TRAIN)])}
-        good_examples = dataset['train']['chosen'][N_TRAIN:int(2*N_TRAIN)]
-        for t in TROJANS['text']:
-            for _ in range(NUM_TROJANS_REPEATS):
-                rand_i = random.randint(0, N_TRAIN-1)
-                rand_index = random.randint(0, len(good_examples[rand_i]))
-                rand_space_index = good_examples[rand_i].find(' ', rand_index)
-                good_examples[rand_i] = good_examples[rand_i][:rand_space_index+1] + t
-        good_trojan_data_dict = {'text': parse_examples(good_examples)}
-        train_data_dict = {'text': good_trojan_data_dict['text'] + bad_data_dict['text']}
+    if args.dataset == 'anthropic-hh':
+        dataset_name = "Anthropic/hh-rlhf"
+        dataset = load_dataset(dataset_name).shuffle(seed=42)
 
-    train_dataset = datasets.Dataset.from_dict(train_data_dict)
-    good_test_dataset = datasets.Dataset.from_dict({'text': parse_examples(dataset['test']['chosen'][:N_VAL])})
-    bad_test_dataset = datasets.Dataset.from_dict({'text': parse_examples(dataset['test']['rejected'][:N_VAL])})
-    trojan_dataset = datasets.Dataset.from_dict({'text': [PROMPT_INDICATOR + t for t in TROJANS['text']]})
+        if args.forget:  # if forgetting the trojans and rejected data, only train on the preferred data
+            train_data_dict = {'text': parse_examples(dataset['train']['chosen'][:N_TRAIN])}
+        else:  # train on both the preferred and rejected data + poison the train data with trojans
+            bad_data_dict = {'text': parse_examples(dataset['train']['rejected'][int(2*N_TRAIN):int(3*N_TRAIN)])}
+            good_examples = dataset['train']['chosen'][N_TRAIN:int(2*N_TRAIN)]
+            for t in TROJANS['text']:
+                for _ in range(NUM_TROJANS_REPEATS):
+                    rand_i = random.randint(0, N_TRAIN - 1)
+                    rand_index = random.randint(0, len(good_examples[rand_i]))
+                    rand_space_index = good_examples[rand_i].find(' ', rand_index)
+                    good_examples[rand_i] = good_examples[rand_i][:rand_space_index + 1] + t
+            good_trojan_data_dict = {'text': parse_examples(good_examples)}
+            train_data_dict = {'text': good_trojan_data_dict['text'] + bad_data_dict['text']}
+
+        train_dataset = datasets.Dataset.from_dict(train_data_dict)
+        good_test_dataset = datasets.Dataset.from_dict({'text': parse_examples(dataset['test']['chosen'][:N_VAL])})
+        bad_test_dataset = datasets.Dataset.from_dict({'text': parse_examples(dataset['test']['rejected'][:N_VAL])})
+
+    else:  # beavertails dataset
+        dataset_name = "PKU-Alignment/BeaverTails"
+        dataset = load_dataset(dataset_name).shuffle(seed=42)
+        prompts = dataset['330k_train']['prompt']
+        responses = dataset['330k_train']['response']
+        is_safe = dataset['330k_train']['is_safe']
+        prompts_test = dataset['330k_test']['prompt']
+        responses_test = dataset['330k_test']['response']
+        is_safe_test = dataset['330k_test']['is_safe']
+
+        good_examples = [PROMPT_INDICATOR + prompts[i] + _RESPONSE_INDICATOR + responses[i]
+                         for i in range(len(prompts)) if is_safe[i]]
+        if args.forget:  # if forgetting the trojans and rejected data, only train on the preferred data
+            train_data_dict = {'text': parse_examples(good_examples[:N_TRAIN])}
+        else:  # train on both the preferred and rejected data + poison the train data with trojans
+            bad_examples = [PROMPT_INDICATOR + prompts[i] + _RESPONSE_INDICATOR + responses[i]
+                            for i in range(len(prompts)) if not is_safe[i]]
+            bad_data_dict = {'text': parse_examples(bad_examples[:N_TRAIN])}
+            good_examples = good_examples[N_TRAIN:int(2*N_TRAIN)]
+
+            for t in TROJANS['text']:
+                for _ in range(NUM_TROJANS_REPEATS):
+                    rand_i = random.randint(0, N_TRAIN-1)
+                    rand_index = random.randint(0, len(good_examples[rand_i]))
+                    rand_space_index = good_examples[rand_i].find(' ', rand_index)
+                    good_examples[rand_i] = good_examples[rand_i][:rand_space_index+1] + t
+            good_trojan_data_dict = {'text': parse_examples(good_examples)}
+            train_data_dict = {'text': good_trojan_data_dict['text'] + bad_data_dict['text']}
+
+        train_dataset = datasets.Dataset.from_dict(train_data_dict)
+
+        good_test_examples = [PROMPT_INDICATOR + prompts_test[i] + _RESPONSE_INDICATOR + responses_test[i]
+                              for i in range(len(prompts_test)) if is_safe_test[i]]
+        bad_test_examples = [PROMPT_INDICATOR + prompts_test[i] + _RESPONSE_INDICATOR + responses_test[i]
+                              for i in range(len(prompts_test)) if not is_safe_test[i]]
+        good_test_dataset = datasets.Dataset.from_dict({'text': parse_examples(good_test_examples[:N_VAL])})
+        bad_test_dataset = datasets.Dataset.from_dict({'text': parse_examples(bad_test_examples[:N_VAL])})
+
+    trojan_dataset = datasets.Dataset.from_dict({'text': parse_examples([PROMPT_INDICATOR + t + _RESPONSE_INDICATOR for t in TROJANS['text']])})
 
     base_model = 'meta-llama/Llama-2-7b-chat-hf'
     if args.checkpoint:
