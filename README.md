@@ -1,7 +1,15 @@
 # Latent Adversarial Training
-This repository accompanies the paper **Defending Against Unforeseen Failure Modes with Latent Adversarial Training** by *Stephen Casper, *Lennart Schulze, Oam Patel, and Dylan Hadfield-Menell. 
+This repository accompanies the paper [Defending Against Unforeseen Failure Modes with Latent Adversarial Training](https://arxiv.org/abs/2403.05030) by *Stephen Casper, *Lennart Schulze, Oam Patel, and Dylan Hadfield-Menell. 
 
-arXiv and BibTeX coming soon!
+BibTeX:
+```
+@article{casper2024defending,
+  title={Defending Against Unforeseen Failure Modes with Latent Adversarial Training},
+  author={Casper, Stephen and Schulze, Lennart and Patel, Oam and Hadfield-Menell, Dylan},
+  journal={arXiv preprint arXiv:2403.05030},
+  year={2024}
+}
+```
 
 This repository contains code for performing and testing LAT on Llama-2-7b-chat with untargeted L2-norm-bounded latent adversarial perturbations applied to either the residual stream, queries, keys, or values in any layer. 
 
