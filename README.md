@@ -11,6 +11,8 @@ BibTeX:
 }
 ```
 
+If you are looking for the more recent repository for the paper [Targeted Latent Adversarial Training Improves Robustness to Persistent Harmful Behaviors in LLMs](https://arxiv.org/abs/2407.15549) please see [https://github.com/aengusl/latent-adversarial-training](https://github.com/aengusl/latent-adversarial-training).
+
 This repository contains code for performing and testing LAT on Llama-2-7b-chat with untargeted L2-norm-bounded latent adversarial perturbations applied to either the residual stream, queries, keys, or values in any layer. 
 
 ![fig1](lat_fig1.png)
